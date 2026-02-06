@@ -1,0 +1,13 @@
+---
+title: "Evaluating Classification Model Performance"
+author: "Kiera Griffiths"
+format: html
+editor: visual
+---
+## Approach
+
+Source: https://raw.githubusercontent.com/acatlin/data/refs/heads/master/penguin_predictions.csv
+
+Using the dataset in the url above, I will test how accurately a classification model predicts if a penguin is female. I will find the null error rate to get an idea of how often an uninformed, random guess is correct, then using the three thresholds given (0.2, 0.5, 0.8) I will how each one impacts the accuracy of a prediction. I expect to find out how even a slight change in a threshold can change a model's ability to maintain accuracy.
+
+---
