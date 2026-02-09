@@ -1,0 +1,99 @@
+> library(ggplot2)
+> > ## Read the CSV File
+> url <- "https://raw.githubusercontent.com/acatlin/data/refs/heads/master/penguin_predictions.csv"
+> penguin_predictions <- read.csv(url)
+> > ## Confirm column names and data types & prevent logic errors
+> head(penguin_predictions)
+  .pred_female .pred_class    sex
+1    0.9921746      female female
+2    0.9542394      female female
+3    0.9847350      female female
+4    0.1870206        male female
+5    0.9947012      female female
+6    0.9999891      female female
+> str(penguin_predictions)
+'data.frame':	93 obs. of  3 variables:
+ $ .pred_female: num  0.992 0.954 0.985 0.187 0.995 ...
+ $ .pred_class : chr  "female" "female" "female" "male" ...
+ $ sex         : chr  "female" "female" "female" "female" ...
+> unique(penguin_predictions$sex)
+[1] "female" "male"  
+> > ## Binary target variable
+> penguin_predictions$sex_binary <- ifelse(
++   penguin_predictions$sex == "female", 1, 0
++ )
+> > penguin_predictions$sex_binary <- ifelse(
++   penguin_predictions$sex == max(penguin_predictions$sex), 1, 0
++ )
+> > > ## Plot characteristics
+> ggplot(penguin_predictions, aes(x = factor(sex_binary), fill = factor(sex_binary))) +
++   geom_bar() +
++   labs(x = "Female or Male", y = "Penguin Count", title = "Predicting the Sex of Penguins") +
++   scale_fill_manual(values = c("mediumpurple", "darkseagreen")) +
++   guides(fill = "none")
+> > ## Calculate Null Error Rate
+> majority_class <- names(sort(table(penguin_predictions$sex_binary), decreasing = TRUE))[1]
+> null_error_rate <- 1 - (max(table(penguin_predictions$sex_binary)) / nrow(penguin_predictions))
+> > null_error_rate
+[1] 0.4193548
+> > ## Recompute Predictions at Thresholds
+> pred_02 <- ifelse(penguin_predictions$.pred_female > 0.2, 1, 0)
+> pred_05 <- ifelse(penguin_predictions$.pred_female > 0.5, 1, 0)
+> pred_08 <- ifelse(penguin_predictions$.pred_female > 0.8, 1, 0)
+> > ## Build Confusion Matrices
+> > ## Threshold 0.2
+> TP_02 <- sum(pred_02 == 1 & penguin_predictions$sex_binary == 1)
+> FP_02 <- sum(pred_02 == 1 & penguin_predictions$sex_binary == 0)
+> TN_02 <- sum(pred_02 == 0 & penguin_predictions$sex_binary == 0)
+> FN_02 <- sum(pred_02 == 0 & penguin_predictions$sex_binary == 1)
+> > ## Threshold 0.5
+> TP_05 <- sum(pred_05 == 1 & penguin_predictions$sex_binary == 1)
+> FP_05 <- sum(pred_05 == 1 & penguin_predictions$sex_binary == 0)
+> TN_05 <- sum(pred_05 == 0 & penguin_predictions$sex_binary == 0)
+> FN_05 <- sum(pred_05 == 0 & penguin_predictions$sex_binary == 1)
+> > ## Threshold 0.8
+> TP_08 <- sum(pred_08 == 1 & penguin_predictions$sex_binary == 1)
+> FP_08 <- sum(pred_08 == 1 & penguin_predictions$sex_binary == 0)
+> TN_08 <- sum(pred_08 == 0 & penguin_predictions$sex_binary == 0)
+> FN_08 <- sum(pred_08 == 0 & penguin_predictions$sex_binary == 1)
+> > ## Compute Metrics
+> > ## Threshold 0.2
+> accuracy_02  <- (TP_02 + TN_02) / nrow(penguin_predictions)
+> precision_02 <- ifelse(TP_02 + FP_02 == 0, NA, TP_02 / (TP_02 + FP_02))
+> recall_02    <- ifelse(TP_02 + FN_02 == 0, NA, TP_02 / (TP_02 + FN_02))
+> F1_02        <- ifelse(
++   is.na(precision_02) | is.na(recall_02),
++   NA,
++   2 * precision_02 * recall_02 / (precision_02 + recall_02)
++ )
+> > ## Threshold 0.5
+> accuracy_05  <- (TP_05 + TN_05) / nrow(penguin_predictions)
+> precision_05 <- ifelse(TP_05 + FP_05 == 0, NA, TP_05 / (TP_05 + FP_05))
+> recall_05    <- ifelse(TP_05 + FN_05 == 0, NA, TP_05 / (TP_05 + FN_05))
+> F1_05        <- ifelse(
++   is.na(precision_05) | is.na(recall_05),
++   NA,
++   2 * precision_05 * recall_05 / (precision_05 + recall_05)
++ )
+> > ## Threshold 0.8
+> accuracy_08  <- (TP_08 + TN_08) / nrow(penguin_predictions)
+> precision_08 <- ifelse(TP_08 + FP_08 == 0, NA, TP_08 / (TP_08 + FP_08))
+> recall_08    <- ifelse(TP_08 + FN_08 == 0, NA, TP_08 / (TP_08 + FN_08))
+> F1_08        <- ifelse(
++   is.na(precision_08) | is.na(recall_08),
++   NA,
++   2 * precision_08 * recall_08 / (precision_08 + recall_08)
++ )
+> > ## Create table
+> results <- data.frame(
++   threshold = c(0.2, 0.5, 0.8),
++   accuracy = c(accuracy_02, accuracy_05, accuracy_08),
++   precision = c(precision_02, precision_05, precision_08),
++   recall = c(recall_02, recall_05, recall_08),
++   F1 = c(F1_02, F1_05, F1_08)
++ )
+> > results
+  threshold   accuracy  precision     recall         F1
+1       0.2 0.08602151 0.13953488 0.11111111 0.12371134
+2       0.5 0.06451613 0.07692308 0.05555556 0.06451613
+3       0.8 0.05376344 0.05263158 0.03703704 0.04347826
